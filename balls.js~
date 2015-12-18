@@ -8,12 +8,12 @@
  * addPacman
  * remPacman
  * pacmanMove
- * pacmanEat
+ * // pacmanEat considered unneeded
  */
 
 var FieldDrawSettings = {
-	columnWidth : 20,
-	rowHeight : 20,
+	columnWidth : 30,
+	rowHeight : 30,
 }
 
 var PacmanDrawSettings = {
@@ -25,7 +25,7 @@ var PacmanDrawSettings = {
 
 var PacmanModelSettings = {
 	mouthOpenAngle : 1/6,
-	moveSpeed : 0.02,
+	moveSpeed : 0.03,
 	rotateSpeed : 0.002,
 	mouthSpeed : 0.0005,
 }
@@ -38,7 +38,7 @@ function scene() {
 	context = canvas.getContext('2d');
 	canvas.width =  window.innerWidth - 10;
 	canvas.height = window.innerHeight - 10;
-	objects=[];
+	pacmansArray=[];
 
 	addPacman( 0, 3, 3, 1 );
 
@@ -67,7 +67,7 @@ function addPacman( player, column, row, angle ) {
 	p.y = new ConstValue( ( row + 0.5 ) * FieldDrawSettings.rowHeight );
 	p.ar = new ConstValue( angle/2 );
 	p.am = new ConstValue( PacmanModelSettings.mouthOpenAngle );
-	objects.push( p );
+	pacmansArray.push( p );
 	return p;
 }
 
@@ -75,10 +75,10 @@ function remPacman( pacman ) {
 	/*
 	 * removes pacman from the field
 	 */
-	delete objects[ objects.indexOf( pacman ) ];
+	delete pacmansArray[ pacmansArray.indexOf( pacman ) ];
 }
 
-function pacmanMove( pacman, direction, eat ) { 
+function pacmanMove( pacman, direction, eaten ) { 
 	/*
 	 * orders a pacman to move by one cell
 	 *
@@ -88,7 +88,7 @@ function pacmanMove( pacman, direction, eat ) {
 	 * 	1 - down
 	 * 	2 - left
 	 *	3 - up
-	 * eat - whether pacman should eat when movement done (optional argument)
+	 * 'eaten' - pacman to be eaten by 'pacman' (optional argument)
 	 */
 	var rot_dir = 1;
 	var cur_ar = pacman.ar.get();
@@ -117,19 +117,31 @@ function pacmanMove( pacman, direction, eat ) {
 		if( cur_ar*rot_dir > direction/2*rot_dir ) cur_ar -= 2*rot_dir;
 		pacman.ar = new ChangingValue( cur_ar, direction/2, PacmanModelSettings.rotateSpeed*rot_dir );
 	}
-	if( eat ) pacman.shallEat = true;
+	if( eaten ) {
+		pacman.target = eaten;
+		pacman.shallEat = true;
+		var ip = objects.indexOf( pacman );
+		var it = objects.indexOf( pacman.target );
+		if( ip < it ) {
+			var tmp = pacmansArray[ip];
+			pacmansArray[ip] = pacmansArray[it];
+			pacmansArray[it] = tmp;
+		}
+	}
 }
 
-function pacmanEat( pacman ) {
+/*
+function pacmanEat( eater, eaten ) {
 	/*
-	 * orders pacman to eat.
+	 * orders eater pacman to close mouth. when closed, eaten pacman will disappear
 	 * if pacman is moving right at the moment, movement completion will precede eating
-	 */
-	if( pacman.x.dxdy || pacman.y.dxdy )
-		pacman.shallEat = true;
-	else
-		pacman.am = new ChangingValue( pacman.am.get(), 0, -PacmanModelSettings.mouthSpeed );
+	 * /
+	eater.target = eaten;
+	eater.shallEat = true;
+	if( ! ( eater.x.dxdy || eater.y.dxdy ) )
+		eater.am = new ChangingValue( eater.am.get(), 0, -PacmanModelSettings.mouthSpeed );
 }
+*/
 
 function ChangingValue( x0, x1, dxdt ) { // from, to, speed
 	this.x1 = x1;
@@ -156,9 +168,8 @@ function Pacman( player ) {
 
 function drawFrame( ) {
 	canvas.width = canvas.width; // clear canvas
-	for( var i in objects ) {
-		var o = objects[i];
-		if( o.type == 'Pacman' ) drawPacman( o );
+	for( var i in pacmansArray ) {
+		drawPacman( pacmansArray[i] );
 	}
 }
 
@@ -205,39 +216,39 @@ function drawPacman( pacman ) {
 }
 
 function controller() {
-	for( var i in objects ) {
-		var o = objects[i];
-		if( o.type == 'Pacman' ) {
-			// check for end of movement
-			var curTime = Date.now();
-			if( o.x.dxdt )
-				if( o.x.t1 < curTime ) {
-					o.x = new ConstValue( o.x.x1 );
-					if( o.shallEat ) { 
-						o.am = new ChangingValue( o.am.get(), 0, -PacmanModelSettings.mouthSpeed ); // a planned eating
-						o.shallEat = false;
-					}
+	for( var i in pacmansArray ) {
+		var pacman = pacmansArray[i];
+		// check for end of movement
+		var curTime = Date.now();
+		if( pacman.x.dxdt )
+			if( pacman.x.t1 < curTime ) {
+				pacman.x = new ConstValue( pacman.x.x1 );
+				if( pacman.shallEat ) { 
+					pacman.am = new ChangingValue( pacman.am.get(), 0, -PacmanModelSettings.mouthSpeed ); // a planned eating
+					pacman.shallEat = false;
 				}
-			if( o.y.dxdt )
-				if( o.y.t1 < curTime ) {
-					o.y = new ConstValue( o.y.x1 );
-					if( o.shallEat ) { 
-						o.am = new ChangingValue( o.am.get(), 0, -PacmanModelSettings.mouthSpeed ); // a planned eating
-						o.shallEat = false;
-					}
+			}
+		if( pacman.y.dxdt )
+			if( pacman.y.t1 < curTime ) {
+				pacman.y = new ConstValue( pacman.y.x1 );
+				if( pacman.shallEat ) { 
+					pacman.am = new ChangingValue( pacman.am.get(), 0, -PacmanModelSettings.mouthSpeed ); // a planned eating
+					pacman.shallEat = false;
 				}
-			if( o.ar.dxdt )
-				if( o.ar.t1 < curTime )
-					o.ar = new ConstValue( o.ar.x1 );
-			if( o.am.dxdt )
-				if( o.am.t1 < curTime ) {
-					// check for mouth actions
-					if( o.am.x1 == 0 ) // mouth just has closed, start opening
-						o.am = new ChangingValue( 0, PacmanModelSettings.mouthOpenAngle, PacmanModelSettings.mouthSpeed );
-					else // mouth just has closed
-						o.am = new ConstValue( o.am.x1 );
+			}
+		if( pacman.ar.dxdt )
+			if( pacman.ar.t1 < curTime )
+				pacman.ar = new ConstValue( pacman.ar.x1 );
+		if( pacman.am.dxdt )
+			if( pacman.am.t1 < curTime ) {
+				// check for mouth actions
+				if( pacman.am.x1 == 0 ) { // mouth just has closed, start opening & try to remove eaten pacman
+					if( pacman.target ) remPacman( pacman.target );
+					pacman.am = new ChangingValue( 0, PacmanModelSettings.mouthOpenAngle, PacmanModelSettings.mouthSpeed );
+					delete pacman.target;
 				}
-		}
+				else // mouth just has opned, stop it
+					pacman.am = new ConstValue( pacman.am.x1 );
+			}
 	}
 }
-
