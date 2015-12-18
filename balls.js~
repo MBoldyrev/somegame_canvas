@@ -113,8 +113,10 @@ function pacmanMove( pacman, direction, eat ) {
 			pacman.y = new ChangingValue( pacman.y.get(), ( pacman.row + 0.5 ) * FieldDrawSettings.rowHeight, -PacmanModelSettings.moveSpeed );
 			if( cur_ar < 0.5 || cur_ar > 1.5 ) rot_dir = -1;
 	}
-	if( pacman.ar.get() != direction/2 )
+	if( pacman.ar.get() != direction/2 ) {
+		if( cur_ar*rot_dir > direction/2*rot_dir ) cur_ar -= 2*rot_dir;
 		pacman.ar = new ChangingValue( cur_ar, direction/2, PacmanModelSettings.rotateSpeed*rot_dir );
+	}
 	if( eat ) pacman.shallEat = true;
 }
 
@@ -212,16 +214,16 @@ function controller() {
 				if( o.x.t1 < curTime ) {
 					o.x = new ConstValue( o.x.x1 );
 					if( o.shallEat ) { 
-						pacman.am = new ChangingValue( pacman.am.get(), 0, -PacmanModelSettings.mouthSpeed ); // a planned eating
-						pacman.shallEat = false;
+						o.am = new ChangingValue( o.am.get(), 0, -PacmanModelSettings.mouthSpeed ); // a planned eating
+						o.shallEat = false;
 					}
 				}
 			if( o.y.dxdt )
 				if( o.y.t1 < curTime ) {
 					o.y = new ConstValue( o.y.x1 );
 					if( o.shallEat ) { 
-						pacman.am = new ChangingValue( pacman.am.get(), 0, -PacmanModelSettings.mouthSpeed ); // a planned eating
-						pacman.shallEat = false;
+						o.am = new ChangingValue( o.am.get(), 0, -PacmanModelSettings.mouthSpeed ); // a planned eating
+						o.shallEat = false;
 					}
 				}
 			if( o.ar.dxdt )
