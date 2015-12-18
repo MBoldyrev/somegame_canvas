@@ -25,8 +25,8 @@ var PacmanDrawSettings = {
 
 var PacmanModelSettings = {
 	mouthOpenAngle : 1/6,
-	moveSpeed : 0.05,
-	rotateSpeed : 0.0002,
+	moveSpeed : 0.02,
+	rotateSpeed : 0.002,
 	mouthSpeed : 0.0005,
 }
 
@@ -40,7 +40,7 @@ function scene() {
 	canvas.height = window.innerHeight - 10;
 	objects=[];
 
-	addPacman( 0, 3, 3, 0 );
+	addPacman( 0, 3, 3, 1 );
 
 	setInterval( drawFrame, 50 );
 	setInterval( controller, 50 );
@@ -49,6 +49,8 @@ function scene() {
 function addPacman( player, column, row, angle ) {
 	/*
 	 * creates a pacman at given field position
+	 *
+	 * returns the created Pacman object 
 	 *
 	 * player - a number [0,1,..)
 	 * angle - pacman's orientation
@@ -63,9 +65,10 @@ function addPacman( player, column, row, angle ) {
 	p.angle = angle;
 	p.x = new ConstValue( ( column + 0.5 ) * FieldDrawSettings.columnWidth );
 	p.y = new ConstValue( ( row + 0.5 ) * FieldDrawSettings.rowHeight );
-	p.ar = new ConstValue( angle * Math.PI/2 );
+	p.ar = new ConstValue( angle/2 );
 	p.am = new ConstValue( PacmanModelSettings.mouthOpenAngle );
 	objects.push( p );
+	return p;
 }
 
 function remPacman( pacman ) {
@@ -91,29 +94,34 @@ function pacmanMove( pacman, direction, eat ) {
 	var cur_ar = pacman.ar.get();
 	switch( direction ) {
 		case 0:
-			pacman.x = new ChangingValue( pacman.x, ( pacman.column + 1.5 ) * FieldDrawSettings.columnWidth, PacmanModelSettings.moveSpeed );
+			pacman.column++;
+			pacman.x = new ChangingValue( pacman.x.get(), ( pacman.column + 0.5 ) * FieldDrawSettings.columnWidth, PacmanModelSettings.moveSpeed );
 			if( cur_ar < 1 ) rot_dir = -1;
 			break;
 		case 1:
-			pacman.y = new ChangingValue( pacman.y, ( pacman.row + 1.5 ) * FieldDrawSettings.rowHeight, PacmanModelSettings.moveSpeed );
+			pacman.row++;
+			pacman.y = new ChangingValue( pacman.y.get(), ( pacman.row + 0.5 ) * FieldDrawSettings.rowHeight, PacmanModelSettings.moveSpeed );
 			if( cur_ar < 1.5 && cur_ar > 0.5 ) rot_dir = -1;
 			break;
 		case 2:
-			pacman.x = new ChangingValue( pacman.x, ( pacman.column - 0.5 ) * FieldDrawSettings.columnWidth, -PacmanModelSettings.moveSpeed );
+			pacman.column--;
+			pacman.x = new ChangingValue( pacman.x.get(), ( pacman.column + 0.5 ) * FieldDrawSettings.columnWidth, -PacmanModelSettings.moveSpeed );
 			if( cur_ar < 2 && cur_ar > 1 ) rot_dir = -1;
 			break;
 		case 3:
-			pacman.y = new ChangingValue( pacman.y, ( pacman.row - 0.5 ) * FieldDrawSettings.rowHeight, -PacmanModelSettings.moveSpeed );
+			pacman.row--;
+			pacman.y = new ChangingValue( pacman.y.get(), ( pacman.row + 0.5 ) * FieldDrawSettings.rowHeight, -PacmanModelSettings.moveSpeed );
 			if( cur_ar < 0.5 || cur_ar > 1.5 ) rot_dir = -1;
 	}
-	pacman.ar = new ChangingValue( cur_ar, direction/2, PacmanModelSettings.rotateSpeed*rot_dir );
+	if( pacman.ar.get() != direction/2 )
+		pacman.ar = new ChangingValue( cur_ar, direction/2, PacmanModelSettings.rotateSpeed*rot_dir );
 	if( eat ) pacman.shallEat = true;
 }
 
 function pacmanEat( pacman ) {
 	/*
 	 * orders pacman to eat.
-	 * if pacman is moving right at the moment, its completion will precede eating
+	 * if pacman is moving right at the moment, movement completion will precede eating
 	 */
 	if( pacman.x.dxdy || pacman.y.dxdy )
 		pacman.shallEat = true;
