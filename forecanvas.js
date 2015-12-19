@@ -1,6 +1,7 @@
 /*
  * -- Public classes:
  * Pacman
+ * Block
  *
  *
  * -- Public functions:
@@ -8,12 +9,20 @@
  * addPacman( player, column, row, angle )
  * remPacman( pacman )
  * pacmanMove( pacman, direction[, eaten ] )
- * // pacmanEat considered unneeded
+ * showGrid()
+ * hideGrid()
+ * addBlock( type, column, row )
+ * remBlock()
  */
 
 var FieldDrawSettings = {
 	columnWidth : 30,
 	rowHeight : 30,
+	columnCount : 25,
+	rowCount : 25,
+	lineWidth : 1,
+	lineColor : 'black',
+	showGrid : false,
 }
 
 var PacmanDrawSettings = {
@@ -30,19 +39,54 @@ var PacmanModelSettings = {
 	mouthSpeed : 0.0005,
 }
 
+function BlockType( imgClass, height, width ) {
+	try {
+		this.img = document.getElementsByClassName( imgClass )[0];
+	}
+	catch(e) {
+		console.log('Cannot find image class '+imgClass+': '+e.name);
+		return;
+	}
+	if( height )
+		this.height = height;
+	else
+		this.height = FieldDrawSettings.rowHeight;
+	if( width )
+		this.width = width;
+	else
+		this.width = FieldDrawSettings.columnWidth;
+}
+
 function scene() {
 	/*
 	 * starts drawing
 	 */
-	canvas = document.getElementById('foreCanvas');
-	context = canvas.getContext('2d');
-	canvas.width =  window.innerWidth - 10;
-	canvas.height = window.innerHeight - 10;
+	canvasF = document.getElementById('foreCanvas');
+	contextF = canvasF.getContext('2d');
+	canvasF.width =  window.innerWidth - 10;
+	canvasF.height = window.innerHeight - 10;
+	canvasB = document.getElementById('backCanvas');
+	contextB = canvasB.getContext('2d');
+	blockTypes = {
+		'Wall' : new BlockType('img1'),
+		'Banana' : new BlockType('img2', 20 ),
+		'Bullshit' : new BlockType('img3', 20, 20 ),
+		'Grape' : new BlockType('img4'),
+		'Baby' : new BlockType('img5'),
+		// ...
+	};
 	pacmansArray=[];
+	blocksArray=[];
 
-	addPacman( 0, 3, 3, 1 );
+	p1=addPacman( 0, 3, 3, 1 );
+	b1=addBlock( 'Bullshit',3,4);
+	b2=addBlock( 'Wall',2,2);
+	b3=addBlock( 'Banana',2,6);
+	b4=addBlock( 'Grape',5,2);
+	b5=addBlock( 'Baby',6,4);
+	pacmanMove(p1,1,b1);
 
-	setInterval( drawFrame, 50 );
+	setInterval( drawForeground, 50 );
 	setInterval( controller, 50 );
 }
 
@@ -88,7 +132,7 @@ function pacmanMove( pacman, direction, eaten ) {
 	 * 	1 - down
 	 * 	2 - left
 	 *	3 - up
-	 * 'eaten' - pacman to be eaten by 'pacman' (optional argument)
+	 * 'eaten' - pacman or block to be eaten by 'pacman' (optional argument)
 	 */
 	var rot_dir = 1;
 	var cur_ar = pacman.ar.get();
@@ -120,15 +164,46 @@ function pacmanMove( pacman, direction, eaten ) {
 	if( eaten ) {
 		pacman.target = eaten;
 		pacman.shallEat = true;
-		var ip = pacmansArray.indexOf( pacman );
-		var it = pacmansArray.indexOf( pacman.target );
-		if( ip < it ) {
-			var tmp = pacmansArray[ip];
-			pacmansArray[ip] = pacmansArray[it];
-			pacmansArray[it] = tmp;
+		if( eaten.type == 'pacman' ) {
+			var ip = pacmansArray.indexOf( pacman );
+			var it = pacmansArray.indexOf( pacman.target );
+			if( ip < it ) {
+				var tmp = pacmansArray[ip];
+				pacmansArray[ip] = pacmansArray[it];
+				pacmansArray[it] = tmp;
+			}
 		}
 	}
 }
+
+function showGrid() {
+	FieldDrawSettings.showGrid = true;
+	drawBackground();
+}
+
+function hideGrid() {
+	FieldDrawSettings.showGrid = false;
+	drawBackground();
+}
+
+function addBlock( type, column, row ) {
+	/*
+	 * adds a block of given 'type' as from blockTypes key
+	 */
+	var b = new Block( type, column, row );
+	blocksArray.push(b);
+	drawBackground();
+	return b;
+}
+
+function remBlock( block ) {
+	/*
+	 * removes block from the field
+	 */
+	delete blocksArray[ blocksArray.indexOf( block ) ];
+	drawBackground();
+}
+
 
 /*
 function pacmanEat( eater, eaten ) {
@@ -166,10 +241,24 @@ function Pacman( player ) {
 	this.player = player;
 }
 
-function drawFrame( ) {
-	canvas.width = canvas.width; // clear canvas
+function Block( type, column, row ) {
+	this.type = type;
+	this.column = column;
+	this.row = row;
+}
+
+function drawForeground( ) {
+	canvasF.width = canvasF.width; // clear canvasF
 	for( var i in pacmansArray ) {
 		drawPacman( pacmansArray[i] );
+	}
+}
+
+function drawBackground() {
+	canvasB.width = canvasB.width; // clear canvas
+	if( FieldDrawSettings.showGrid ) drawGrid();
+	for( var i in blocksArray ) {
+		drawBlock( blocksArray[i] );
 	}
 }
 
@@ -180,39 +269,70 @@ function drawPacman( pacman ) {
 		var ar = pacman.ar.get();
 		var am = pacman.am.get();
 		var r = PacmanDrawSettings.R;
-		context.fillStyle = PacmanDrawSettings.fillColors[pacman.player];
-		context.strokeStyle = PacmanDrawSettings.strokeColors[pacman.player];
-		context.lineWidth = PacmanDrawSettings.lineWidth;
+		contextF.fillStyle = PacmanDrawSettings.fillColors[pacman.player];
+		contextF.strokeStyle = PacmanDrawSettings.strokeColors[pacman.player];
+		contextF.lineWidth = PacmanDrawSettings.lineWidth;
 	}
 	catch(e) {
 		console.log('bad pacman: cannot draw. ' + e.name);
 		return;
 	}
-	context.beginPath();
-	context.lineCap = 'round';
-	context.lineJoin = 'round';
-	context.moveTo(x+r*Math.cos((ar-am)*Math.PI),y+r*Math.sin((ar-am)*Math.PI));
-	context.lineTo(x,y);
-	context.lineTo(x+r*Math.cos((ar+am)*Math.PI),y+r*Math.sin((ar+am)*Math.PI));
-	context.arc(x,y,r,(ar+am)*Math.PI,(ar-am)*Math.PI,false);
-	context.fill();
-	context.stroke();
-	context.strokeStyle = 'black';
-	context.lineWidth = 1;
+	contextF.beginPath();
+	contextF.lineCap = 'round';
+	contextF.lineJoin = 'round';
+	contextF.moveTo(x+r*Math.cos((ar-am)*Math.PI),y+r*Math.sin((ar-am)*Math.PI));
+	contextF.lineTo(x,y);
+	contextF.lineTo(x+r*Math.cos((ar+am)*Math.PI),y+r*Math.sin((ar+am)*Math.PI));
+	contextF.arc(x,y,r,(ar+am)*Math.PI,(ar-am)*Math.PI,false);
+	contextF.fill();
+	contextF.stroke();
+	contextF.strokeStyle = 'black';
+	contextF.lineWidth = 1;
 	var eyex = x + r * 0.6 * Math.cos( ar*Math.PI - Math.PI/3 );
 	var eyey = y + r * 0.6 * Math.sin( ar*Math.PI - Math.PI/3 );
-	context.beginPath();
-	context.fillStyle = "white";
-	context.moveTo(eyex,eyey);
-	context.arc(eyex,eyey,r/5,0,Math.PI*2,true);
-	context.fill();
+	contextF.beginPath();
+	contextF.fillStyle = "white";
+	contextF.moveTo(eyex,eyey);
+	contextF.arc(eyex,eyey,r/5,0,Math.PI*2,true);
+	contextF.fill();
 	var eyedotx = eyex + r * 0.1 * Math.cos(ar*Math.PI);
 	var eyedoty = eyey + r * 0.1 * Math.sin(ar*Math.PI);
-	context.beginPath();
-	context.fillStyle = 'black';
-	context.moveTo(eyedotx,eyedoty);
-	context.arc(eyedotx,eyedoty,r/15,0,Math.PI*2,true);
-	context.fill();
+	contextF.beginPath();
+	contextF.fillStyle = 'black';
+	contextF.moveTo(eyedotx,eyedoty);
+	contextF.arc(eyedotx,eyedoty,r/15,0,Math.PI*2,true);
+	contextF.fill();
+}
+
+function drawGrid() {
+	contextB.lineWidth = FieldDrawSettings.lineWidth;
+	contextB.strokeStyle = FieldDrawSettings.lineColor;
+	for( var x = 0; x < FieldDrawSettings.columnCount; x++ ) {
+		contextB.beginPath();
+		contextB.moveTo( x * FieldDrawSettings.columnWidth, 0 );
+		contextB.lineTo( x * FieldDrawSettings.columnWidth, FieldDrawSettings.rowHeight * ( FieldDrawSettings.rowCount + 1 ) - 1 );
+		contextB.stroke();
+	}
+	for( var y = 0; y < FieldDrawSettings.rowCount; y++ ) {
+		contextB.beginPath();
+		contextB.moveTo( 0, y * FieldDrawSettings.columnWidth );
+		contextB.lineTo( FieldDrawSettings.columnWidth * ( FieldDrawSettings.columnCount + 1 ) - 1, y * FieldDrawSettings.columnWidth );
+		contextB.stroke();
+	}
+}
+
+function drawBlock( block ) {
+	var type;
+	try {
+		type = blockTypes[block.type];
+	}
+	catch(e) {
+		console.log('Cannot draw block, bad type: '+type+', . '+e.name);
+		return;
+	}
+	var x = FieldDrawSettings.columnWidth * ( block.column + .5 ) - type.width/2;
+	var y = FieldDrawSettings.rowHeight * ( block.row + .5 ) - type.height/2;
+	contextB.drawImage( type.img, x, y, type.width, type.height );
 }
 
 function controller() {
@@ -243,7 +363,10 @@ function controller() {
 			if( pacman.am.t1 < curTime ) {
 				// check for mouth actions
 				if( pacman.am.x1 == 0 ) { // mouth just has closed, start opening & try to remove eaten pacman
-					if( pacman.target ) remPacman( pacman.target );
+					if( pacman.target ) {
+						if( pacman.target.type == 'Pacman' ) remPacman( pacman.target );
+						else remBlock( pacman.target );
+					}
 					pacman.am = new ChangingValue( 0, PacmanModelSettings.mouthOpenAngle, PacmanModelSettings.mouthSpeed );
 					delete pacman.target;
 				}
