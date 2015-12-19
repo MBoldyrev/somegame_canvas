@@ -30,11 +30,11 @@ var PacmanModelSettings = {
 	mouthSpeed : 0.0005,
 }
 
-function scene() {
+function scene( eleme ) {
 	/*
 	 * starts drawing
 	 */
-	canvas = document.getElementById('foreCanvas');
+	canvas = eleme;
 	context = canvas.getContext('2d');
 	canvas.width =  window.innerWidth - 10;
 	canvas.height = window.innerHeight - 10;
