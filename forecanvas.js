@@ -4,10 +4,10 @@
  *
  *
  * -- Public functions:
- * scene
- * addPacman
- * remPacman
- * pacmanMove
+ * scene()
+ * addPacman( player, column, row, angle )
+ * remPacman( pacman )
+ * pacmanMove( pacman, direction[, eaten ] )
  * // pacmanEat considered unneeded
  */
 
