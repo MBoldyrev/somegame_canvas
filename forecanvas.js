@@ -34,7 +34,7 @@ function scene() {
 	/*
 	 * starts drawing
 	 */
-	canvas = document.getElementById('myCanvas');
+	canvas = document.getElementById('foreCanvas');
 	context = canvas.getContext('2d');
 	canvas.width =  window.innerWidth - 10;
 	canvas.height = window.innerHeight - 10;
@@ -120,8 +120,8 @@ function pacmanMove( pacman, direction, eaten ) {
 	if( eaten ) {
 		pacman.target = eaten;
 		pacman.shallEat = true;
-		var ip = objects.indexOf( pacman );
-		var it = objects.indexOf( pacman.target );
+		var ip = pacmansArray.indexOf( pacman );
+		var it = pacmansArray.indexOf( pacman.target );
 		if( ip < it ) {
 			var tmp = pacmansArray[ip];
 			pacmansArray[ip] = pacmansArray[it];
