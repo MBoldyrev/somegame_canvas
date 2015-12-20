@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <title>Balls</title>
 <script src="canvas.js" charset="utf-8" type="text/javascript"></script>
-</head><body onload="scene()">
-<canvas height="600" width="600" id="backCanvas" style="position:absolute">Canvas not supported!</canvas>
-<canvas height="600" width="600" id="foreCanvas" style="position:absolute">Canvas not supported!</canvas>
+</head><body onload="scene( document.getElementsByClassName( 'js-game-forecanvas' )[0], document.getElementsByClassName( 'js-game-backcanvas' )[0] );">
+<canvas height="600" width="600" class="js-game-backcanvas" style="position:absolute; z-index: -20">Canvas not supported!</canvas>
+<canvas height="600" width="600" class="js-game-forecanvas" style="position:absolute; z-index: 1">Canvas not supported!</canvas>
 <img class='img1' style="visibility:hidden" src='pic/img1.png'/>
 <img class='img2' style="visibility:hidden" src='pic/img2.png'/>
 <img class='img3' style="visibility:hidden" src='pic/img3.png'/>

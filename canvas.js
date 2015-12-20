@@ -57,15 +57,15 @@ function BlockType( imgClass, height, width ) {
 		this.width = FieldDrawSettings.columnWidth;
 }
 
-function scene() {
+function scene( forecanvas, backcanvas ) {
 	/*
 	 * starts drawing
 	 */
-	canvasF = document.getElementById('foreCanvas');
+	canvasF = forecanvas;
 	contextF = canvasF.getContext('2d');
 	canvasF.width =  window.innerWidth - 10;
 	canvasF.height = window.innerHeight - 10;
-	canvasB = document.getElementById('backCanvas');
+	canvasB = backcanvas;
 	contextB = canvasB.getContext('2d');
 	blockTypes = {
 		'Wall' : new BlockType('img1'),
@@ -80,12 +80,16 @@ function scene() {
 
 //<EXAMPLE comment='these vars are visible from console'>
 	p1=addPacman( 0, 3, 3, 1 );
+	p2=addPacman( 1, 5, 5, 2 );
+	p3=addPacman( 2, 6, 6, 0 );
 	b1=addBlock( 'Bullshit',3,4);
 	b2=addBlock( 'Wall',2,2);
 	b3=addBlock( 'Banana',2,6);
 	b4=addBlock( 'Grape',5,2);
 	b5=addBlock( 'Baby',6,4);
 	pacmanMove(p1,1,b1);
+	pacmanMove(p2,2);
+	pacmanMove(p3,0);
 //</EXAMPLE>
 
 	setInterval( drawForeground, 50 );
