@@ -78,6 +78,7 @@ function scene() {
 	pacmansArray=[];
 	blocksArray=[];
 
+//<EXAMPLE comment='these vars are visible from console'>
 	p1=addPacman( 0, 3, 3, 1 );
 	b1=addBlock( 'Bullshit',3,4);
 	b2=addBlock( 'Wall',2,2);
@@ -85,6 +86,7 @@ function scene() {
 	b4=addBlock( 'Grape',5,2);
 	b5=addBlock( 'Baby',6,4);
 	pacmanMove(p1,1,b1);
+//</EXAMPLE>
 
 	setInterval( drawForeground, 50 );
 	setInterval( controller, 50 );
@@ -103,6 +105,10 @@ function addPacman( player, column, row, angle ) {
 	 * 	2 - left
 	 *	3 - up
 	 */
+	if( [ player, column, row, angle ].some( function(i){ return typeof(i) == 'undefined'; } ) ) {
+		console.log('Bad addPacman() call!');
+		return;
+	}
 	var p = new Pacman( player );
 	p.column = column;
 	p.row = row;
@@ -190,6 +196,10 @@ function addBlock( type, column, row ) {
 	/*
 	 * adds a block of given 'type' as from blockTypes key
 	 */
+	if( [ type, column, row ].some( function(i){ return typeof(i) == 'undefined'; } ) ) {
+		console.log('Bad addBlock() call!');
+		return;
+	}
 	var b = new Block( type, column, row );
 	blocksArray.push(b);
 	drawBackground();
