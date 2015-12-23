@@ -74,7 +74,6 @@ function scene( forecanvas, backcanvas ) {
 		'Bullshit' : new BlockType('img3', 20, 20 ),
 		'Grape' : new BlockType('img4'),
 		'Baby' : new BlockType('img5'),
-		'Baby' : new BlockType('img6'),
 		// ...
 	};
 	pacmansArray=[];
