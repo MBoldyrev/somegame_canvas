@@ -68,9 +68,9 @@ function scene( forecanvas, backcanvas ) {
 	contextF = canvasF.getContext('2d');
 	canvasF.width =  FieldDrawSettings.canvasWidth;
 	canvasF.height = FieldDrawSettings.canvasHeight;
+	canvasB = backcanvas;
 	canvasB.width =  FieldDrawSettings.canvasWidth;
 	canvasB.height = FieldDrawSettings.canvasHeight;
-	canvasB = backcanvas;
 	contextB = canvasB.getContext('2d');
 	blockTypes = {
 		'Wall' : new BlockType('img1'),
