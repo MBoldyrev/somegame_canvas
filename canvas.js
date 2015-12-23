@@ -23,6 +23,8 @@ var FieldDrawSettings = {
 	lineWidth : 1,
 	lineColor : 'black',
 	showGrid : false,
+	canvasHeight: (window.innerHeight - 10),
+	canvasWidth: (window.innerHeight - 10),
 }
 
 var PacmanDrawSettings = {
@@ -64,8 +66,10 @@ function scene( forecanvas, backcanvas ) {
 	 */
 	canvasF = forecanvas;
 	contextF = canvasF.getContext('2d');
-	canvasF.width =  window.innerWidth - 10;
-	canvasF.height = window.innerHeight - 10;
+	canvasF.width =  FieldDrawSettings.canvasWidth;
+	canvasF.height = FieldDrawSettings.canvasHeight;
+	canvasB.width =  FieldDrawSettings.canvasWidth;
+	canvasB.height = FieldDrawSettings.canvasHeight;
 	canvasB = backcanvas;
 	contextB = canvasB.getContext('2d');
 	blockTypes = {
