@@ -42,9 +42,10 @@ var PacmanModelSettings = {
 function BlockType( imgClass, height, width ) {
 	try {
 		this.img = document.getElementsByClassName( imgClass )[0];
+		if( ! this.img ) throw { name: 'Block type not initialised', message: 'No such class: "'+imgClass+'"' };
 	}
 	catch(e) {
-		console.log('Cannot find image class '+imgClass+': '+e.name);
+		console.log('Cannot find image class '+imgClass+': '+e.name+' : '+e.message);
 		return;
 	}
 	if( height )
@@ -73,6 +74,7 @@ function scene( forecanvas, backcanvas ) {
 		'Bullshit' : new BlockType('img3', 20, 20 ),
 		'Grape' : new BlockType('img4'),
 		'Baby' : new BlockType('img5'),
+		'Baby' : new BlockType('img6'),
 		// ...
 	};
 	pacmansArray=[];
