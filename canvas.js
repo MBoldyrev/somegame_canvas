@@ -234,11 +234,11 @@ setTimeout( function() {
 
 	if( webSocketAddress != undefined ) {
 		console.log('Попытка установить соединение с ' + webSocketAddress );
-		var socket = new WebSocket( webSocketAddress );	
-		socket.onopen = function() {
+		webSocket = new WebSocket( webSocketAddress );	
+		webSocket.onopen = function() {
 			console.log("Соединение установлено.");
 		};
-		socket.onclose = function(event) {
+		webSocket.onclose = function(event) {
 		if (event.wasClean) {
 			console.log('Соединение закрыто чисто');
 		} else {
@@ -246,12 +246,42 @@ setTimeout( function() {
 		}
 			console.log('Код: ' + event.code + ' причина: ' + event.reason);
 		};
-		socket.onmessage = function(event) {
+		webSocket.onmessage = function(event) {
 			console.log("Получены данные " + event.data);
 			command( event.data );
 		};
-		socket.onerror = function(error) {
+		webSocket.onerror = function(error) {
 			console.log("Ошибка webSocket: " + error.message);
+		};
+		// control events
+		document.onkeydown = function(event) {
+			if (!event)
+			event = window.event;
+			var code = event.keyCode;
+			if (event.charCode && code == 0)
+			code = event.charCode;
+			switch(code) {
+			case 37:
+				console.log('Key left.');
+				event.preventDefault();
+				sendUserMovement( 2 );
+				break;
+			case 38:
+				console.log('Key up.');
+				event.preventDefault();
+				sendUserMovement( 3 );
+				break;
+			case 39:
+				console.log('Key right.');
+				event.preventDefault();
+				sendUserMovement( 0 );
+				break;
+			case 40:
+				console.log('Key down.');
+				event.preventDefault();
+				sendUserMovement( 1 );
+				break;
+			}
 		};
 	}
 
@@ -524,8 +554,6 @@ function drawBlock( block ) {
 }
 
 function controller() {
-	//for( var i in pacmansArray ) {
-	//	var pacman = pacmansArray[i];
 	pacmansArray.forEach( function( userPacmans, player ) {
 		userPacmans.forEach( function( pacman ) {
 			// check for end of movement
@@ -565,4 +593,32 @@ function controller() {
 				}
 		});
 	});
+}
+
+function sendUserMovement( moveDir ) {
+	webSocket.send(
+		JSON.stringify(
+			{
+				"method": "move",
+				"params":
+					{
+						"direction": moveDir,
+					}
+			}
+		)
+	);
+}
+
+function sendRequestFieldAll() {
+	webSocket.send(
+		JSON.stringify(
+			{
+				"method": "getField",
+				"params":
+					{
+						"type": "all",
+					}
+			}
+		)
+	);
 }
