@@ -49,12 +49,12 @@ function command_all( pacs, points, bonuses ) {
 			PacmanDrawSettings.strokeColors[userId] = userPackmans.line_color;
 			pacmansArray[userId] = [];
 			userPackmans.units.split(';').forEach( function( unitCoords ) {
-				var unitCoords=unitCoords.split(',');
+				var unitCoords=unitCoords.split(',').map(function(i){return parseInt(i);});
 				addPacman( userId, unitCoords[0], unitCoords[1], 0 );
 			});
 		});
 		points.split(';').forEach( function( pointCoords ) {
-			var pointCoords = pointCoords.split(',');
+			var pointCoords = pointCoords.split(',').map(function(i){return parseInt(i);});
 			addBlock( 'Coin', pointCoords[0], pointCoords[1] );
 		});
 	} catch(e) {
@@ -104,7 +104,7 @@ function command_event( player, actionString ) {
 				}
 				else {
 					// ate another pacman
-					var pacEaten = action.split(',');
+					var pacEaten = action.split(',').map(function(i){return parseInt(i);});
 					pacmanMove( moveDir, pacmansArray[pacEaten[0]][pacEaten[1]] );
 					return;
 				}
@@ -173,6 +173,7 @@ function scene( forecanvas, backcanvas ) {
 	canvasB.height = FieldDrawSettings.canvasHeight;
 	contextB = canvasB.getContext('2d');
 	blockTypes = {
+		'Coin' : new BlockType('img1'),
 		'Wall' : new BlockType('img1'),
 		'Banana' : new BlockType('img2', 20 ),
 		'Bullshit' : new BlockType('img3', 20, 20 ),
@@ -214,8 +215,8 @@ function scene( forecanvas, backcanvas ) {
 ],"points":"9,0;9,1;9,2;9,3;9,4"
 }}'
 
-'{"code":0, "resp":{"method":"all", "pacs":[{user_id":0,"bg_color":"blue","line_color":"red","units":"0,0;3,6;2,8"},{"user_id":1,"bg_color":"black","line_color":"yellow","units":"4,1;5,7;8,2"}],"points":"9,0;9,1;9,2;9,3;9,4"}}'
-
+'{"code":0, "response":{"method":"all", "pacs":[{"user_id":0,"bg_color":"blue","line_color":"red","units":"1,0;3,6;2,8"},{"user_id":1,"bg_color":"black","line_color":"yellow","units":"4,1;5,7;8,2"}],"points":"9,0;9,1;9,2;9,3;9,4"}}'
+*/
 //</EXAMPLE>
 
 	setInterval( drawForeground, 50 );
