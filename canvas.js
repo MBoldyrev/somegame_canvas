@@ -162,7 +162,7 @@ function BlockType( imgClass, height, width ) {
 		this.width = FieldDrawSettings.columnWidth;
 }
 
-function scene( forecanvas, backcanvas ) {
+function scene( forecanvas, backcanvas, webSocketAddress ) {
 	/*
 	 * starts drawing
 	 */
@@ -185,6 +185,7 @@ function scene( forecanvas, backcanvas ) {
 	};
 	blocksArray=[];
 
+//          ------------------------->8----------------------
 //<EXAMPLE comment='these vars are visible from console'>
 /*
 	p1=addPacman( 0, 3, 3, 1 );
@@ -229,7 +230,30 @@ setTimeout( function() {
 }, 500 );
 //pacmanMove(pacmansArray[1][2], 0, blocksArray[2]);
 
-//</EXAMPLE>
+// </EXAMPLE> ------------------------->8-----------------------
+
+	if( webSocketAddress != undefined ) {
+		console.log('Попытка установить соединение с ' + webSocketAddress );
+		var socket = new WebSocket( webSocketAddress );	
+		socket.onopen = function() {
+			console.log("Соединение установлено.");
+		};
+		socket.onclose = function(event) {
+		if (event.wasClean) {
+			console.log('Соединение закрыто чисто');
+		} else {
+			console.log('Обрыв соединения'); // например, "убит" процесс сервера
+		}
+			console.log('Код: ' + event.code + ' причина: ' + event.reason);
+		};
+		socket.onmessage = function(event) {
+			console.log("Получены данные " + event.data);
+			command( event.data );
+		};
+		socket.onerror = function(error) {
+			console.log("Ошибка webSocket: " + error.message);
+		};
+	}
 
 	setInterval( drawForeground, 50 );
 	setInterval( controller, 50 );
