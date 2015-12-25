@@ -17,7 +17,7 @@
 
 var pacmansArray=[];
 
-function command( string json_cmd ) {
+function command( json_cmd ) {
 	try {
 		var cmd = JSON.parse( json_cmd );
 		if( ! cmd['code'] == 0 ) 
@@ -43,20 +43,20 @@ function command( string json_cmd ) {
 function command_all( pacs, points, bonuses ) {
 	try {
 		// place pacmans
-		pacs.forEach( userPackmans ) {
+		pacs.forEach( function( userPackmans ) {
 			var userId = userPackmans.user_id;
 			PacmanDrawSettings.fillColors[userId] = userPackmans.bg_color;
 			PacmanDrawSettings.strokeColors[userId] = userPackmans.line_color;
 			pacmansArray[userId] = [];
-			userPackmans.units.split(';').forEach( unitCoords ) {
+			userPackmans.units.split(';').forEach( function( unitCoords ) {
 				var unitCoords=unitCoords.split(',');
 				addPacman( userId, unitCoords[0], unitCoords[1], 0 );
-			}		
-		}
-		points.split(';').forEach( pointCoords ) {
+			});
+		});
+		points.split(';').forEach( function( pointCoords ) {
 			var pointCoords = pointCoords.split(',');
 			addBlock( 'Coin', pointCoords[0], pointCoords[1] );
-		}
+		});
 	} catch(e) {
 		console.log('Couldn\'t parse json "all" command: '+e,name);
 	}
@@ -64,15 +64,15 @@ function command_all( pacs, points, bonuses ) {
 
 function command_event( player, actionString ) {
 	try{
-		actionString.split(';').forEach( action, pacId ) {
+		actionString.split(';').forEach( function( action, pacId ) {
 			if( action.length == 0 )
-				continue;
+				return;
 			var pacman = pacmansArray[player][pacId];
 			var e = action.search('e');
 			var moveDir;
 			if( e == -1 ) // just moved
 				moveDir = parseInt(action);
-			esle {
+			else {
 				// ate sth
 				moveDir = parseInt(action.slice(0,e));
 				action = action.slice(e+1);
@@ -94,13 +94,13 @@ function command_event( player, actionString ) {
 				}
 				if(action.length == 0) {
 					// ate a coin
-					blocksArray.forEach( block ) {
+					blocksArray.forEach( function( block ) {
 						if( block.row == eatRow && block.column == eatColumn ) {
 							pacmanMove( pacman, moveDir, block );
 							return;
 						}
 						pacmanMove( pacman, moveDir );
-					}
+					});
 				}
 				else {
 					// ate another pacman
@@ -109,7 +109,7 @@ function command_event( player, actionString ) {
 					return;
 				}
 			}
-		}
+		});
 	} catch(e) {
 		console.log('Couldn\'t parse json "action" command: '+e,name);
 	}
@@ -183,6 +183,7 @@ function scene( forecanvas, backcanvas ) {
 	blocksArray=[];
 
 //<EXAMPLE comment='these vars are visible from console'>
+/*
 	p1=addPacman( 0, 3, 3, 1 );
 	p2=addPacman( 1, 5, 5, 2 );
 	p3=addPacman( 2, 6, 6, 0 );
@@ -194,6 +195,27 @@ function scene( forecanvas, backcanvas ) {
 	pacmanMove(p1,1,b1);
 	pacmanMove(p2,2);
 	pacmanMove(p3,0);
+*/
+/* Example all cmd:
+'{"code":0, "resp":{"method":"all", "pacs":[
+{
+"user_id":0
+,"bg_color":"blue"
+,"line_color":"red"
+,"units":"0,0;3,6;2,8"
+}
+,
+{
+"user_id":1
+,"bg_color":"black"
+,"line_color":"yellow"
+,"units":"4,1;5,7;8,2"
+}
+],"points":"9,0;9,1;9,2;9,3;9,4"
+}}'
+
+'{"code":0, "resp":{"method":"all", "pacs":[{user_id":0,"bg_color":"blue","line_color":"red","units":"0,0;3,6;2,8"},{"user_id":1,"bg_color":"black","line_color":"yellow","units":"4,1;5,7;8,2"}],"points":"9,0;9,1;9,2;9,3;9,4"}}'
+
 //</EXAMPLE>
 
 	setInterval( drawForeground, 50 );
@@ -225,6 +247,8 @@ function addPacman( player, column, row, angle ) {
 	p.y = new ConstValue( ( row + 0.5 ) * FieldDrawSettings.rowHeight );
 	p.ar = new ConstValue( angle/2 );
 	p.am = new ConstValue( PacmanModelSettings.mouthOpenAngle );
+	if( pacmansArray[player] == undefined )
+		pacmansArray[player] = [];
 	pacmansArray[player].push( p );
 	return p;
 }
@@ -367,9 +391,11 @@ function Block( type, column, row ) {
 
 function drawForeground( ) {
 	canvasF.width = canvasF.width; // clear canvasF
-	pacmansArray.forEach( userPacmans, player )
-		userPackmans.forEach( pacman )
+	pacmansArray.forEach( function( userPacmans, player ) {
+		userPacmans.forEach( function( pacman ) {
 			drawPacman( pacman, player );
+		});
+	});
 	/*
 	for( var i in pacmansArray ) {
 		drawPacman( pacmansArray[i] );
@@ -459,42 +485,45 @@ function drawBlock( block ) {
 }
 
 function controller() {
-	for( var i in pacmansArray ) {
-		var pacman = pacmansArray[i];
-		// check for end of movement
-		var curTime = Date.now();
-		if( pacman.x.dxdt )
-			if( pacman.x.t1 < curTime ) {
-				pacman.x = new ConstValue( pacman.x.x1 );
-				if( pacman.shallEat ) { 
-					pacman.am = new ChangingValue( pacman.am.get(), 0, -PacmanModelSettings.mouthSpeed ); // a planned eating
-					pacman.shallEat = false;
-				}
-			}
-		if( pacman.y.dxdt )
-			if( pacman.y.t1 < curTime ) {
-				pacman.y = new ConstValue( pacman.y.x1 );
-				if( pacman.shallEat ) { 
-					pacman.am = new ChangingValue( pacman.am.get(), 0, -PacmanModelSettings.mouthSpeed ); // a planned eating
-					pacman.shallEat = false;
-				}
-			}
-		if( pacman.ar.dxdt )
-			if( pacman.ar.t1 < curTime )
-				pacman.ar = new ConstValue( pacman.ar.x1 );
-		if( pacman.am.dxdt )
-			if( pacman.am.t1 < curTime ) {
-				// check for mouth actions
-				if( pacman.am.x1 == 0 ) { // mouth just has closed, start opening & try to remove eaten pacman
-					if( pacman.target ) {
-						if( pacman.target.type == 'Pacman' ) remPacman( pacman.target );
-						else remBlock( pacman.target );
+	//for( var i in pacmansArray ) {
+	//	var pacman = pacmansArray[i];
+	pacmansArray.forEach( function( userPacmans, player ) {
+		userPacmans.forEach( function( pacman ) {
+			// check for end of movement
+			var curTime = Date.now();
+			if( pacman.x.dxdt )
+				if( pacman.x.t1 < curTime ) {
+					pacman.x = new ConstValue( pacman.x.x1 );
+					if( pacman.shallEat ) { 
+						pacman.am = new ChangingValue( pacman.am.get(), 0, -PacmanModelSettings.mouthSpeed ); // a planned eating
+						pacman.shallEat = false;
 					}
-					pacman.am = new ChangingValue( 0, PacmanModelSettings.mouthOpenAngle, PacmanModelSettings.mouthSpeed );
-					delete pacman.target;
 				}
-				else // mouth just has opned, stop it
-					pacman.am = new ConstValue( pacman.am.x1 );
-			}
-	}
+			if( pacman.y.dxdt )
+				if( pacman.y.t1 < curTime ) {
+					pacman.y = new ConstValue( pacman.y.x1 );
+					if( pacman.shallEat ) { 
+						pacman.am = new ChangingValue( pacman.am.get(), 0, -PacmanModelSettings.mouthSpeed ); // a planned eating
+						pacman.shallEat = false;
+					}
+				}
+			if( pacman.ar.dxdt )
+				if( pacman.ar.t1 < curTime )
+					pacman.ar = new ConstValue( pacman.ar.x1 );
+			if( pacman.am.dxdt )
+				if( pacman.am.t1 < curTime ) {
+					// check for mouth actions
+					if( pacman.am.x1 == 0 ) { // mouth just has closed, start opening & try to remove eaten pacman
+						if( pacman.target ) {
+							if( pacman.target.type == 'Pacman' ) remPacman( pacman.target );
+							else remBlock( pacman.target );
+						}
+						pacman.am = new ChangingValue( 0, PacmanModelSettings.mouthOpenAngle, PacmanModelSettings.mouthSpeed );
+						delete pacman.target;
+					}
+					else // mouth just has opned, stop it
+						pacman.am = new ConstValue( pacman.am.x1 );
+				}
+		});
+	});
 }
