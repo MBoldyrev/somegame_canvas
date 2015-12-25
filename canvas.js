@@ -43,12 +43,12 @@ function command( json_cmd ) {
 function command_all( pacs, points, bonuses ) {
 	try {
 		// place pacmans
-		pacs.forEach( function( userPackmans ) {
-			var userId = userPackmans.user_id;
-			PacmanDrawSettings.fillColors[userId] = userPackmans.bg_color;
-			PacmanDrawSettings.strokeColors[userId] = userPackmans.line_color;
+		pacs.forEach( function( userPacmans ) {
+			var userId = userPacmans.user_id;
+			PacmanDrawSettings.fillColors[userId] = userPacmans.bg_color;
+			PacmanDrawSettings.strokeColors[userId] = userPacmans.line_color;
 			pacmansArray[userId] = [];
-			userPackmans.units.split(';').forEach( function( unitCoords ) {
+			userPacmans.units.split(';').forEach( function( unitCoords ) {
 				var unitCoords=unitCoords.split(',').map(function(i){return parseInt(i);});
 				addPacman( userId, unitCoords[0], unitCoords[1], 0 );
 			});
@@ -71,7 +71,10 @@ function command_event( player, actionString ) {
 			var e = action.search('e');
 			var moveDir;
 			if( e == -1 ) // just moved
+			{
 				moveDir = parseInt(action);
+				pacmanMove( pacman, moveDir );
+			}
 			else {
 				// ate sth
 				moveDir = parseInt(action.slice(0,e));
@@ -99,13 +102,12 @@ function command_event( player, actionString ) {
 							pacmanMove( pacman, moveDir, block );
 							return;
 						}
-						pacmanMove( pacman, moveDir );
 					});
 				}
 				else {
 					// ate another pacman
 					var pacEaten = action.split(',').map(function(i){return parseInt(i);});
-					pacmanMove( moveDir, pacmansArray[pacEaten[0]][pacEaten[1]] );
+					pacmanMove( pacman, moveDir, pacmansArray[pacEaten[0]][pacEaten[1]] );
 					return;
 				}
 			}
@@ -216,10 +218,16 @@ function scene( forecanvas, backcanvas ) {
 }}'
 
 '{"code":0, "response":{"method":"all", "pacs":[{"user_id":0,"bg_color":"blue","line_color":"red","units":"1,0;3,6;2,8"},{"user_id":1,"bg_color":"black","line_color":"yellow","units":"4,1;5,7;8,2"}],"points":"9,0;9,1;9,2;9,3;9,4"}}'
+
+'{"code":0, "response":{"method":"event", "user_id":1,"action":"0;0;0e"}}'
 */
 
 command('{"code":0, "response":{"method":"all", "pacs":[{"user_id":0,"bg_color":"blue","line_color":"red","units":"1,0;3,6;2,8"},{"user_id":1,"bg_color":"black","line_color":"yellow","units":"0,1;5,7;8,2"}],"points":"9,0;9,1;9,2;9,3;9,4"}}');
-pacmanMove(pacmansArray[1][2], 0, blocksArray[2]);
+command('{"code":0, "response":{"method":"event", "user_id":0,"action":"1;1;1"}}');
+setTimeout( function() {
+	command('{"code":0, "response":{"method":"event", "user_id":1,"action":"0e0,0;0;0e"}}');
+}, 500 );
+//pacmanMove(pacmansArray[1][2], 0, blocksArray[2]);
 
 //</EXAMPLE>
 
@@ -262,7 +270,9 @@ function remPacman( pacman ) {
 	/*
 	 * removes pacman from the field
 	 */
-	delete pacmansArray[ pacmansArray.indexOf( pacman ) ];
+	for( var i in pacmansArray) {
+		delete pacmansArray[i][ pacmansArray[i].indexOf( pacman ) ];
+	}
 }
 
 function pacmanMove( pacman, direction, eaten ) { 
