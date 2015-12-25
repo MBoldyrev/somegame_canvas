@@ -25,7 +25,7 @@ function command( json_cmd ) {
 		var resp = cmd['response'];
 		switch( resp['method'] ) {
 			case 'all':
-				command_all( resp['pacs'], resp['points'], resp['bonuses'] );
+				command_all( resp['pacs'], resp['points'], resp['walls'], resp['bonuses'] );
 				break;
 			case 'event':
 				command_event( resp['user_id'], resp['action'] );
@@ -40,7 +40,7 @@ function command( json_cmd ) {
 	}
 }
 
-function command_all( pacs, points, bonuses ) {
+function command_all( pacs, points, walls, bonuses ) {
 	try {
 		// place pacmans
 		pacs.forEach( function( userPacmans ) {
@@ -56,6 +56,10 @@ function command_all( pacs, points, bonuses ) {
 		points.split(';').forEach( function( pointCoords ) {
 			var pointCoords = pointCoords.split(',').map(function(i){return parseInt(i);});
 			addBlock( 'Coin', pointCoords[0], pointCoords[1] );
+		});
+		walls.split(';').forEach( function( wallCoords ) {
+			var wallCoords = wallCoords.split(',').map(function(i){return parseInt(i);});
+			addBlock( 'Wall', wallCoords[0], wallCoords[1] );
 		});
 	} catch(e) {
 		console.log('Couldn\'t parse json "all" command: '+e,name);
@@ -175,8 +179,8 @@ function scene( forecanvas, backcanvas, webSocketAddress ) {
 	canvasB.height = FieldDrawSettings.canvasHeight;
 	contextB = canvasB.getContext('2d');
 	blockTypes = {
-		'Coin' : new BlockType('img1'),
-		'Wall' : new BlockType('img1'),
+		'Coin' : new BlockType('img1',17,17),
+		'Wall' : new BlockType('img2'),
 		'Banana' : new BlockType('img2', 20 ),
 		'Bullshit' : new BlockType('img3', 20, 20 ),
 		'Grape' : new BlockType('img4'),
@@ -223,7 +227,7 @@ function scene( forecanvas, backcanvas, webSocketAddress ) {
 '{"code":0, "response":{"method":"event", "user_id":1,"action":"0;0;0e"}}'
 */
 
-command('{"code":0, "response":{"method":"all", "pacs":[{"user_id":0,"bg_color":"blue","line_color":"red","units":"1,0;3,6;2,8"},{"user_id":1,"bg_color":"black","line_color":"yellow","units":"0,1;5,7;8,2"}],"points":"9,0;9,1;9,2;9,3;9,4"}}');
+command('{"code":0, "response":{"method":"all", "pacs":[{"user_id":0,"bg_color":"blue","line_color":"red","units":"1,0;3,6;2,8"},{"user_id":1,"bg_color":"black","line_color":"yellow","units":"0,1;5,7;8,2"}],"points":"9,0;9,1;9,2;9,3;9,4","walls":"0,10;1,10;2,10;3,10"}}');
 command('{"code":0, "response":{"method":"event", "user_id":0,"action":"1;1;1"}}');
 setTimeout( function() {
 	command('{"code":0, "response":{"method":"event", "user_id":1,"action":"0e0,0;0;0e"}}');
