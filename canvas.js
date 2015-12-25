@@ -15,6 +15,106 @@
  * remBlock()
  */
 
+var pacmansArray=[];
+
+function command( string json_cmd ) {
+	try {
+		var cmd = JSON.parse( json_cmd );
+		if( ! cmd['code'] == 0 ) 
+			return;
+		var resp = cmd['response'];
+		switch( resp['method'] ) {
+			case 'all':
+				command_all( resp['pacs'], resp['points'], resp['bonuses'] );
+				break;
+			case 'event':
+				command_event( resp['user_id'], resp['action'] );
+				break;
+			default: 
+				throw {name: 'invalid method'};
+				return;
+			}
+	} catch(e) {
+		console.log('Couldn\'t parse json command "'+json_cmd+'": e.name');
+		return;
+	}
+}
+
+function command_all( pacs, points, bonuses ) {
+	try {
+		// place pacmans
+		pacs.forEach( userPackmans ) {
+			var userId = userPackmans.user_id;
+			PacmanDrawSettings.fillColors[userId] = userPackmans.bg_color;
+			PacmanDrawSettings.strokeColors[userId] = userPackmans.line_color;
+			pacmansArray[userId] = [];
+			userPackmans.units.split(';').forEach( unitCoords ) {
+				var unitCoords=unitCoords.split(',');
+				addPacman( userId, unitCoords[0], unitCoords[1], 0 );
+			}		
+		}
+		points.split(';').forEach( pointCoords ) {
+			var pointCoords = pointCoords.split(',');
+			addBlock( 'Coin', pointCoords[0], pointCoords[1] );
+		}
+	} catch(e) {
+		console.log('Couldn\'t parse json "all" command: '+e,name);
+	}
+}
+
+function command_event( player, actionString ) {
+	try{
+		actionString.split(';').forEach( action, pacId ) {
+			if( action.length == 0 )
+				continue;
+			var pacman = pacmansArray[player][pacId];
+			var e = action.search('e');
+			var moveDir;
+			if( e == -1 ) // just moved
+				moveDir = parseInt(action);
+			esle {
+				// ate sth
+				moveDir = parseInt(action.slice(0,e));
+				action = action.slice(e+1);
+				var eatColumn = pacman.column;
+				var eatRow = pacman.row;
+				switch( moveDir ) {
+					case 0:
+						eatColumn++;
+						break;
+					case 1:
+						eatRow++;
+						break;
+					case 2:
+						eatColumn--;
+						break;
+					case 3:
+						eatRow--;
+						break;
+				}
+				if(action.length == 0) {
+					// ate a coin
+					blocksArray.forEach( block ) {
+						if( block.row == eatRow && block.column == eatColumn ) {
+							pacmanMove( pacman, moveDir, block );
+							return;
+						}
+						pacmanMove( pacman, moveDir );
+					}
+				}
+				else {
+					// ate another pacman
+					var pacEaten = action.split(',');
+					pacmanMove( moveDir, pacmansArray[pacEaten[0]][pacEaten[1]] );
+					return;
+				}
+			}
+		}
+	} catch(e) {
+		console.log('Couldn\'t parse json "action" command: '+e,name);
+	}
+}
+
 var FieldDrawSettings = {
 	columnWidth : 30,
 	rowHeight : 30,
@@ -80,7 +180,6 @@ function scene( forecanvas, backcanvas ) {
 		'Baby' : new BlockType('img5'),
 		// ...
 	};
-	pacmansArray=[];
 	blocksArray=[];
 
 //<EXAMPLE comment='these vars are visible from console'>
@@ -118,7 +217,7 @@ function addPacman( player, column, row, angle ) {
 		console.log('Bad addPacman() call!');
 		return;
 	}
-	var p = new Pacman( player );
+	var p = new Pacman();
 	p.column = column;
 	p.row = row;
 	p.angle = angle;
@@ -126,7 +225,7 @@ function addPacman( player, column, row, angle ) {
 	p.y = new ConstValue( ( row + 0.5 ) * FieldDrawSettings.rowHeight );
 	p.ar = new ConstValue( angle/2 );
 	p.am = new ConstValue( PacmanModelSettings.mouthOpenAngle );
-	pacmansArray.push( p );
+	pacmansArray[player].push( p );
 	return p;
 }
 
@@ -268,9 +367,14 @@ function Block( type, column, row ) {
 
 function drawForeground( ) {
 	canvasF.width = canvasF.width; // clear canvasF
+	pacmansArray.forEach( userPacmans, player )
+		userPackmans.forEach( pacman )
+			drawPacman( pacman, player );
+	/*
 	for( var i in pacmansArray ) {
 		drawPacman( pacmansArray[i] );
 	}
+	*/
 }
 
 function drawBackground() {
@@ -281,15 +385,15 @@ function drawBackground() {
 	}
 }
 
-function drawPacman( pacman ) {
+function drawPacman( pacman, player ) {
 	try {
 		var x = pacman.x.get();
 		var y = pacman.y.get();
 		var ar = pacman.ar.get();
 		var am = pacman.am.get();
 		var r = PacmanDrawSettings.R;
-		contextF.fillStyle = PacmanDrawSettings.fillColors[pacman.player];
-		contextF.strokeStyle = PacmanDrawSettings.strokeColors[pacman.player];
+		contextF.fillStyle = PacmanDrawSettings.fillColors[player];
+		contextF.strokeStyle = PacmanDrawSettings.strokeColors[player];
 		contextF.lineWidth = PacmanDrawSettings.lineWidth;
 	}
 	catch(e) {
