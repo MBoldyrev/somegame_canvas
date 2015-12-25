@@ -217,6 +217,10 @@ function scene( forecanvas, backcanvas ) {
 
 '{"code":0, "response":{"method":"all", "pacs":[{"user_id":0,"bg_color":"blue","line_color":"red","units":"1,0;3,6;2,8"},{"user_id":1,"bg_color":"black","line_color":"yellow","units":"4,1;5,7;8,2"}],"points":"9,0;9,1;9,2;9,3;9,4"}}'
 */
+
+command('{"code":0, "response":{"method":"all", "pacs":[{"user_id":0,"bg_color":"blue","line_color":"red","units":"1,0;3,6;2,8"},{"user_id":1,"bg_color":"black","line_color":"yellow","units":"0,1;5,7;8,2"}],"points":"9,0;9,1;9,2;9,3;9,4"}}');
+pacmanMove(pacmansArray[1][2], 0, blocksArray[2]);
+
 //</EXAMPLE>
 
 	setInterval( drawForeground, 50 );
